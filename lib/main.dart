@@ -7,13 +7,8 @@ class ByteBankApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-          appBar: AppBar(
-            title: Text('Transferências'),
-          ),
-          floatingActionButton: FloatingActionButton(
-            child: Icon(Icons.add),
-          ),
-          body: transferForm()),
+        body: TrasnferList(),
+      ),
     );
   }
 }
@@ -25,50 +20,65 @@ class transferForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextField(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Criar Transferência'),
+      ),
+      body: Column(
+        children: <Widget>[
+          Editor(
             controller: _controllerFieldAccountNumber,
-            style: TextStyle(
-              fontSize: 24.0,
-            ),
-            decoration: InputDecoration(
-              labelText: 'Número da conta',
-              hintText: '0000',
-            ),
-            keyboardType: TextInputType.number,
+            label: 'Número da conta',
+            tip: '0000',
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextField(
+          Editor(
             controller: _controllerFieldValue,
-            style: TextStyle(
-              fontSize: 24.0,
-            ),
-            decoration: InputDecoration(
-              icon: Icon(Icons.monetization_on),
-              labelText: 'Valor',
-              hintText: '0.00',
-            ),
-            keyboardType: TextInputType.number,
+            label: 'Valor',
+            tip: '0.00',
+            icon: Icons.monetization_on,
           ),
-        ),
-        RaisedButton(
-          child: Text('Confirmar'),
-          onPressed: () {
-            final int accountNumber =
-                int.tryParse(_controllerFieldAccountNumber.text);
-            final double value = double.tryParse(_controllerFieldValue.text);
+          RaisedButton(
+              child: Text('Confirmar'),
+              onPressed: () => _createtransfer(context))
+        ],
+      ),
+    );
+  }
 
-            if (accountNumber != null && value != null) {
-              Transfer(value, accountNumber);
-            }
-          },
-        )
-      ],
+  void _createtransfer(BuildContext context) {
+    final int accountNumber = int.tryParse(_controllerFieldAccountNumber.text);
+    final double value = double.tryParse(_controllerFieldValue.text);
+
+    if (accountNumber != null && value != null) {
+      final newTransfer = Transfer(value, accountNumber);
+      Navigator.pop(context, newTransfer);
+    }
+  }
+}
+
+class Editor extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String tip;
+  final IconData icon;
+
+  const Editor({this.controller, this.label, this.tip, this.icon});
+
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        controller: controller,
+        style: TextStyle(
+          fontSize: 24.0,
+        ),
+        decoration: InputDecoration(
+          icon: icon != null ? Icon(icon) : null,
+          labelText: label,
+          hintText: tip,
+        ),
+        keyboardType: TextInputType.number,
+      ),
     );
   }
 }
@@ -76,25 +86,43 @@ class transferForm extends StatelessWidget {
 class TrasnferList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(children: <Widget>[
-      TransferItem(Transfer(100.00, 1234)),
-      TransferItem(Transfer(200.00, 4434)),
-      TransferItem(Transfer(150.00, 2222))
-    ]);
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Transferências'),
+        ),
+        body: Column(children: <Widget>[
+          TransferItem(Transfer(100.00, 1234)),
+          TransferItem(Transfer(200.00, 4434)),
+          TransferItem(Transfer(150.00, 2222))
+        ]),
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
+          onPressed: () {
+            final Future<Transfer> future =
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return transferForm();
+            }));
+
+            future.then((reicevedTransfer) {
+              debugPrint('Cheguei aqui');
+              debugPrint(reicevedTransfer.toString());
+            });
+          },
+        ));
   }
 }
 
 class TransferItem extends StatelessWidget {
-  final Transfer _transfer;
+  final Transfer transfer;
 
-  const TransferItem(this._transfer);
+  const TransferItem(this.transfer);
 
   Widget build(BuildContext context) {
     return Card(
         child: ListTile(
       leading: Icon(Icons.monetization_on),
-      title: Text(_transfer.value.toString()),
-      subtitle: Text(_transfer.accountNumber.toString()),
+      title: Text(transfer.value.toString()),
+      subtitle: Text(transfer.accountNumber.toString()),
     ));
   }
 }
